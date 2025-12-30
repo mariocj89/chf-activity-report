@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cultural Activities Report - J-1 Teacher</title>
+  <link rel="icon" type="image/jpeg" href="./assets/logo.jpeg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Organization Logo and Name -->
+    <div class="org-header">
+      <img src="./assets/logo.jpeg" alt="Cordell Hull Foundation Logo" class="org-logo">
+      <span class="org-name">The Cordell Hull Foundation</span>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <h1>Cultural Activities Annual Report</h1>
+    </header>
+
+    <!-- Progress Indicator -->
+    <nav class="wizard-progress" aria-label="Form progress">
+      <ol class="progress-steps">
+        <li class="progress-step active" data-step="1">
+          <span class="step-number">1</span>
+          <span class="step-label">General Info</span>
+        </li>
+        <li class="progress-step" data-step="2">
+          <span class="step-number">2</span>
+          <span class="step-label">Students</span>
+        </li>
+        <li class="progress-step" data-step="3">
+          <span class="step-number">3</span>
+          <span class="step-label">Activities</span>
+        </li>
+        <li class="progress-step" data-step="4">
+          <span class="step-number">4</span>
+          <span class="step-label">Review</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="wizard-content">
+      <!-- Step 1: General Information -->
+      <section class="wizard-step active" data-step="1">
+        <h2>General Information</h2>
+        <p class="step-description">Please provide your basic information and school details.</p>
+
+        <div class="form-group">
+          <label for="headerPhotoInput">
+            Header Photo <span class="required">*</span>
+          </label>
+          <p class="field-hint">This photo will appear at the top of your report. It will be cropped to 16:9 landscape format.</p>
+
+          <div class="image-upload-area" id="headerPhotoArea">
+            <input type="file" id="headerPhotoInput" accept="image/*" class="file-input">
+            <div class="upload-placeholder" id="headerPhotoPlaceholder">
+              <span class="upload-icon">📷</span>
+              <span>Click or drag to upload header photo</span>
+            </div>
+            <div class="image-preview-container" id="headerPhotoPreview" style="display: none;">
+              <img src="" alt="Header photo preview" class="image-preview">
+              <div class="image-info">
+                <span class="image-dimensions"></span>
+                <span class="image-size"></span>
+              </div>
+              <button type="button" class="btn-remove-image" data-target="headerPhoto">✕ Remove</button>
+            </div>
+          </div>
+          <div class="processing-indicator" id="headerPhotoProcessing" style="display: none;">
+            <span class="spinner"></span>
+            <span>Processing image...</span>
+          </div>
+          <span class="field-error" id="headerPhotoError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="schoolYear">School Year <span class="required">*</span></label>
+          <select id="schoolYear" required>
+            <!-- Options populated by JS -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="instructorName">Full Name <span class="required">*</span></label>
+          <input type="text" id="instructorName" placeholder="e.g., Maria Garcia" required>
+          <span class="field-error" id="instructorNameError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="sevisId">
+            SEVIS ID <span class="required">*</span>
+            <span class="tooltip" title="Found on Form DS-2019">ⓘ</span>
+          </label>
+          <input type="text" id="sevisId" placeholder="e.g., N0001234567" required>
+          <span class="field-hint">Found on Form DS-2019</span>
+          <span class="field-error" id="sevisIdError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="schoolType">Type of School / Curriculum <span class="required">*</span></label>
+          <input type="text" id="schoolType" list="schoolTypeSuggestions"
+                 placeholder="e.g., Immersion, International" required>
+          <datalist id="schoolTypeSuggestions">
+            <option value="Immersion">
+            <option value="International">
+            <option value="Baccalaureate">
+            <option value="Public">
+            <option value="Charter">
+            <option value="Independent">
+            <option value="Bilingual School">
+            <option value="Kindergarten">
+          </datalist>
+          <span class="field-error" id="schoolTypeError"></span>
+        </div>
+      </section>
+
+      <!-- Step 2: Student Distribution -->
+      <section class="wizard-step" data-step="2">
+        <h2>Student Distribution</h2>
+        <p class="step-description">Enter the percentage of students by nationality/background. Total must equal 100%.</p>
+
+        <div class="distribution-container" id="distributionContainer">
+          <!-- Default categories -->
+          <div class="distribution-row" data-category="American">
+            <label>American</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="American">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="distribution-row" data-category="French">
+            <label>French</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="French">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="distribution-row" data-category="Spanish">
+            <label>Spanish</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="Spanish">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="distribution-row" data-category="Chinese">
+            <label>Chinese</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="Chinese">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="distribution-row" data-category="Mixed">
+            <label>Mixed</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="Mixed">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+          <div class="distribution-row" data-category="Other">
+            <label>Other</label>
+            <div class="input-with-suffix">
+              <input type="number" min="0" max="100" step="0.1" value="0" class="distribution-input" data-category="Other">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom category input -->
+        <div class="add-category-container">
+          <input type="text" id="newCategoryLabel" placeholder="Add custom category...">
+          <button type="button" id="addCategoryBtn" class="btn-secondary">+ Add</button>
+        </div>
+
+        <!-- Total display -->
+        <div class="distribution-total" id="distributionTotal">
+          <span class="total-label">Total:</span>
+          <span class="total-value" id="totalPercentage">0%</span>
+          <span class="total-status" id="totalStatus">Must equal 100%</span>
+        </div>
+        <span class="field-error" id="distributionError"></span>
+      </section>
+
+      <!-- Step 3: Activities -->
+      <section class="wizard-step" data-step="3">
+        <h2>Cultural Activities</h2>
+        <p class="step-description">Document your required cultural activities. Each activity type has specific requirements.</p>
+
+        <div class="activities-controls">
+          <button type="button" id="addActivityBtn" class="btn-secondary">+ Add Third Activity</button>
+          <span class="activity-count" id="activityCount">2 activities (required)</span>
+        </div>
+
+        <div class="activities-container" id="activitiesContainer">
+          <!-- Activities will be rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Step 4: Review -->
+      <section class="wizard-step" data-step="4">
+        <h2>Review Your Report</h2>
+        <p class="step-description">Please review all information before generating your PDF report.</p>
+
+        <div class="review-container" id="reviewContainer">
+          <!-- Review content will be rendered by JS -->
+        </div>
+
+        <div class="generate-section">
+          <button type="button" id="generatePdfBtn" class="btn-primary btn-large">
+            <span class="btn-icon">📄</span>
+            Generate PDF Report
+          </button>
+        </div>
+
+        <div class="progress-overlay" id="generatingOverlay" style="display: none;">
+          <div class="progress-modal">
+            <span class="spinner large"></span>
+            <p id="generatingStatus">Generating PDF...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Navigation Buttons -->
+    <footer class="wizard-navigation">
+      <button type="button" id="prevBtn" class="btn-secondary" style="visibility: hidden;">
+        ← Back
+      </button>
+      <button type="button" id="nextBtn" class="btn-primary">
+        Next →
+      </button>
+    </footer>
+  </div>
+
+  <!-- Activity Template (hidden) -->
+  <template id="activityTemplate">
+    <article class="activity-card" data-activity-index="">
+      <header class="activity-header">
+        <h3 class="activity-title-display">Activity #<span class="activity-number"></span></h3>
+        <div class="activity-controls">
+          <button type="button" class="btn-icon-only btn-move-up" title="Move up">↑</button>
+          <button type="button" class="btn-icon-only btn-move-down" title="Move down">↓</button>
+          <button type="button" class="btn-icon-only btn-remove-activity" title="Remove activity">✕</button>
+        </div>
+      </header>
+
+      <div class="activity-prompt-box">
+        <p class="activity-prompt"></p>
+      </div>
+
+      <div class="activity-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date <span class="required">*</span></label>
+            <input type="date" class="activity-date" required>
+            <span class="field-error activity-date-error"></span>
+          </div>
+          <div class="form-group">
+            <label>Location <span class="required">*</span></label>
+            <input type="text" class="activity-location" placeholder="e.g., School gymnasium" required>
+            <span class="field-error activity-location-error"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Participants <span class="required">*</span></label>
+          <input type="text" class="activity-participants" placeholder="e.g., 25 students, 3 teachers" required>
+          <span class="field-error activity-participants-error"></span>
+        </div>
+
+        <!-- Extra fields for Activity 2 (Virtual Exchange) - hidden by default -->
+        <div class="activity-extra-fields" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Medium of Communication <span class="required">*</span></label>
+              <select class="activity-medium" required>
+                <option value="">Select medium...</option>
+                <option value="Skype">Skype</option>
+                <option value="Email">Email</option>
+                <option value="Facebook">Facebook</option>
+                <option value="WeChat">WeChat</option>
+                <option value="Zoom">Zoom</option>
+                <option value="Google Meet">Google Meet</option>
+                <option value="Microsoft Teams">Microsoft Teams</option>
+                <option value="Other">Other (specify)</option>
+              </select>
+              <span class="field-error activity-medium-error"></span>
+            </div>
+            <div class="form-group medium-other-container" style="display: none;">
+              <label>Specify Medium <span class="required">*</span></label>
+              <input type="text" class="activity-medium-other" placeholder="Specify the communication medium">
+              <span class="field-error activity-medium-other-error"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Country of Foreign School <span class="required">*</span></label>
+            <input type="text" class="activity-foreign-country" placeholder="e.g., France, Japan, Brazil" required>
+            <span class="field-error activity-foreign-country-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Name of Foreign School <span class="required">*</span></label>
+            <input type="text" class="activity-foreign-school-name" placeholder="e.g., Lycée International" required>
+            <span class="field-error activity-foreign-school-name-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label>Address of Foreign School <span class="required">*</span></label>
+            <textarea class="activity-foreign-school-address" rows="2" placeholder="Full address of the foreign school" required></textarea>
+            <span class="field-error activity-foreign-school-address-error"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Activity Title <span class="required">*</span></label>
+          <input type="text" class="activity-title-input" placeholder="e.g., French Culture Day" required>
+          <span class="field-error activity-title-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label>Description <span class="required">*</span></label>
+          <textarea class="activity-description auto-expand" rows="4" placeholder="Describe the activity in detail..." required></textarea>
+          <span class="field-error activity-description-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label>Estimated Impact <span class="required">*</span></label>
+          <textarea class="activity-impact auto-expand" rows="3" placeholder="How did this activity impact the community?" required></textarea>
+          <span class="field-error activity-impact-error"></span>
+        </div>
+
+        <div class="form-group">
+          <label>Activity Photos <span class="required">*</span></label>
+          <p class="field-hint">Upload 1-6 photos. Each will be cropped to 16:9 landscape format.</p>
+
+          <div class="photos-upload-area">
+            <input type="file" class="activity-photos-input file-input" accept="image/*" multiple>
+            <div class="upload-placeholder">
+              <span class="upload-icon">📷</span>
+              <span>Click or drag to upload photos (1-6)</span>
+            </div>
+          </div>
+
+          <div class="photos-grid activity-photos-preview">
+            <!-- Photo previews will be added here -->
+          </div>
+
+          <div class="processing-indicator activity-photos-processing" style="display: none;">
+            <span class="spinner"></span>
+            <span>Processing images...</span>
+          </div>
+
+          <span class="field-error activity-photos-error"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <!-- Photo Preview Template -->
+  <template id="photoPreviewTemplate">
+    <div class="photo-preview-item" data-photo-index="">
+      <img src="" alt="Activity photo" class="photo-thumbnail">
+      <div class="photo-info">
+        <span class="photo-dimensions"></span>
+        <span class="photo-size"></span>
+      </div>
+      <button type="button" class="btn-remove-photo" title="Remove photo">✕</button>
+    </div>
+  </template>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
