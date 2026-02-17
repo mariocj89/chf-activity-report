@@ -19,7 +19,6 @@ import { generatePDF, generateFilename, downloadPDF } from './lib/pdf.js';
 const report = {
   schoolYear: '',
   instructorName: '',
-  sevisId: '',
   schoolType: '',
   headerPhoto: null, // { blob, width, height, previewUrl, bytes }
   distribution: {
@@ -46,8 +45,8 @@ const MAX_ACTIVITIES_INTERNATIONAL = 3;
 const MIN_PHOTOS = 1;
 const MAX_PHOTOS = 6;
 
-// School types that allow a third activity
-const INTERNATIONAL_SCHOOL_TYPES = ['International', 'Baccalaureate'];
+// School types that require a third activity
+const INTERNATIONAL_SCHOOL_TYPES = ['International', 'Immersion'];
 
 // Activity prompts and titles
 const ACTIVITY_CONFIG = [
@@ -65,8 +64,8 @@ const ACTIVITY_CONFIG = [
   },
   {
     number: 3,
-    title: 'Cross-Cultural Outreach Activity',
-    prompt: 'Exchange teachers placed at International schools must conduct at least one cross-cultural activity per academic year outside the host school in nearby schools or communities where international opportunities may be more limited.',
+    title: 'Cultural Activity 3',
+    prompt: 'For INTERNATIONAL or FOREIGN LANGUAGE IMMERSION teachers – all GRADE LEVELS',
     hasExtraFields: false,
     optional: true
   }
@@ -84,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeaderPhotoUpload();
   initSchoolTypeListener();
   initAutoExpandTextareas();
+  initInstructorNameListener();
 
   // Create default 2 activities
   addActivity(0); // Activity 1
@@ -91,6 +91,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateActivityCount();
 });
+
+// ========================================
+// Header Display Updates
+// ========================================
+
+/**
+ * Update the header to display instructor name and school year
+ */
+function updateHeaderDisplay() {
+  const nameHeader = document.getElementById('instructorNameHeader');
+  const yearDisplay = document.getElementById('schoolYearDisplay');
+
+  if (report.instructorName) {
+    nameHeader.textContent = report.instructorName;
+  } else {
+    nameHeader.textContent = '';
+  }
+
+  if (report.schoolYear) {
+    const [startYear, endYear] = report.schoolYear.split('-');
+    yearDisplay.textContent = `School Year ${startYear} - ${endYear}`;
+  } else {
+    yearDisplay.textContent = '';
+  }
+}
+
+/**
+ * Initialize listener for instructor name changes
+ */
+function initInstructorNameListener() {
+  const nameInput = document.getElementById('instructorName');
+
+  nameInput.addEventListener('input', (e) => {
+    report.instructorName = e.target.value.trim();
+    updateHeaderDisplay();
+  });
+
+  nameInput.addEventListener('change', (e) => {
+    report.instructorName = e.target.value.trim();
+    updateHeaderDisplay();
+  });
+}
 
 // ========================================
 // Auto-expanding Textareas
@@ -143,15 +185,16 @@ function initSchoolYearDropdown() {
     currentSchoolYear = `${year - 1}-${year}`;
   }
 
-  // Generate options: current year ± 2
-  const options = [];
-  const baseYear = month >= 8 ? year : year - 1;
-
-  for (let i = -2; i <= 2; i++) {
-    const startYear = baseYear + i;
-    const option = `${startYear}-${startYear + 1}`;
-    options.push(option);
-  }
+  // Generate options: 2025-26 through 2031-32
+  const options = [
+    '2025-2026',
+    '2026-2027',
+    '2027-2028',
+    '2028-2029',
+    '2029-2030',
+    '2030-2031',
+    '2031-2032'
+  ];
 
   // Populate select
   select.innerHTML = options.map(opt =>
@@ -159,12 +202,16 @@ function initSchoolYearDropdown() {
   ).join('');
 
   // Set initial value in state
-  report.schoolYear = currentSchoolYear;
+  report.schoolYear = currentSchoolYear || options[0];
 
   // Listen for changes
   select.addEventListener('change', (e) => {
     report.schoolYear = e.target.value;
+    updateHeaderDisplay();
   });
+
+  // Initial header display
+  updateHeaderDisplay();
 }
 
 // ========================================
@@ -406,12 +453,15 @@ function updateThirdActivityVisibility(isInternational) {
     if (report.activities.length < MAX_ACTIVITIES_INTERNATIONAL) {
       addActivity(2); // Activity 3 (Cross-Cultural Outreach)
     }
-    // Show add button in case it was hidden (though now we auto-add)
-    addBtn.style.display = 'none'; // Hide since we auto-add
-    // Remove third activity if it exists
+    // Hide add button since we auto-add
+    addBtn.style.display = 'none';
+  } else {
+    // Remove third activity if it exists (not international school)
     if (report.activities.length > MAX_ACTIVITIES_STANDARD) {
       removeActivity(2);
     }
+    // Hide add button for non-international schools
+    addBtn.style.display = 'none';
   }
 
   updateActivityCount();
@@ -445,7 +495,6 @@ function addActivity(activityTypeIndex) {
     date: '',
     location: '',
     participants: '',
-    title: '',
     description: '',
     impact: '',
     photos: [], // Array of { blob, width, height, previewUrl, bytes }
@@ -528,7 +577,6 @@ function bindActivityFormFields(card, index) {
     { class: 'activity-date', prop: 'date' },
     { class: 'activity-location', prop: 'location' },
     { class: 'activity-participants', prop: 'participants' },
-    { class: 'activity-title-input', prop: 'title' },
     { class: 'activity-description', prop: 'description' },
     { class: 'activity-impact', prop: 'impact' },
     // Extra fields for Activity 2
@@ -731,7 +779,6 @@ function reRenderAllActivities() {
         date: card.querySelector('.activity-date')?.value || '',
         location: card.querySelector('.activity-location')?.value || '',
         participants: card.querySelector('.activity-participants')?.value || '',
-        title: card.querySelector('.activity-title-input')?.value || activity.title,
         description: card.querySelector('.activity-description')?.value || '',
         impact: card.querySelector('.activity-impact')?.value || ''
       };
@@ -770,10 +817,6 @@ function reRenderAllActivities() {
       card.querySelector('.activity-date').value = activity.date;
       card.querySelector('.activity-location').value = activity.location;
       card.querySelector('.activity-participants').value = activity.participants;
-
-      const titleInput = card.querySelector('.activity-title-input');
-      if (titleInput) titleInput.value = activity.title;
-
       card.querySelector('.activity-description').value = activity.description;
       card.querySelector('.activity-impact').value = activity.impact;
 
@@ -837,7 +880,7 @@ function updateActivityCount() {
   if (isInternationalSchoolType()) {
     countEl.textContent = `${report.activities.length} of ${maxActivities} activities`;
   } else {
-    countEl.textContent = `${report.activities.length} activities (required)`;
+    countEl.textContent = `${report.activities.length} activities`;
   }
 }
 
@@ -943,7 +986,6 @@ function validateGeneralInfo() {
 
   // Update state from form fields
   report.instructorName = document.getElementById('instructorName').value.trim();
-  report.sevisId = document.getElementById('sevisId').value.trim();
   report.schoolType = document.getElementById('schoolType').value.trim();
 
   // Validate instructor name
@@ -954,20 +996,6 @@ function validateGeneralInfo() {
   } else {
     clearError('instructorNameError');
     markValid('instructorName');
-  }
-
-  // Validate SEVIS ID
-  if (!report.sevisId) {
-    showError('sevisIdError', 'SEVIS ID is required.');
-    markInvalid('sevisId');
-    isValid = false;
-  } else if (!/^[A-Za-z0-9\-]+$/.test(report.sevisId)) {
-    showError('sevisIdError', 'SEVIS ID should contain only letters, numbers, and hyphens.');
-    markInvalid('sevisId');
-    isValid = false;
-  } else {
-    clearError('sevisIdError');
-    markValid('sevisId');
   }
 
   // Validate school type
@@ -1041,16 +1069,6 @@ function validateActivities() {
     } else {
       card.querySelector('.activity-participants-error').textContent = '';
       card.querySelector('.activity-participants').classList.remove('invalid');
-    }
-
-    // Validate title
-    if (!activity.title.trim()) {
-      card.querySelector('.activity-title-error').textContent = 'Title is required.';
-      card.querySelector('.activity-title-input').classList.add('invalid');
-      isValid = false;
-    } else {
-      card.querySelector('.activity-title-error').textContent = '';
-      card.querySelector('.activity-title-input').classList.remove('invalid');
     }
 
     // Validate description
@@ -1156,7 +1174,6 @@ function syncActivitiesFromForm() {
     activity.date = card.querySelector('.activity-date')?.value || '';
     activity.location = card.querySelector('.activity-location')?.value || '';
     activity.participants = card.querySelector('.activity-participants')?.value || '';
-    activity.title = card.querySelector('.activity-title-input')?.value || activity.title;
     activity.description = card.querySelector('.activity-description')?.value || '';
     activity.impact = card.querySelector('.activity-impact')?.value || '';
 
@@ -1178,7 +1195,6 @@ function syncActivitiesFromForm() {
 function renderReview() {
   // Sync all data from form
   report.instructorName = document.getElementById('instructorName').value.trim();
-  report.sevisId = document.getElementById('sevisId').value.trim();
   report.schoolType = document.getElementById('schoolType').value.trim();
   syncActivitiesFromForm();
 
@@ -1208,10 +1224,6 @@ function renderReview() {
       <div class="review-field">
         <span class="review-label">Instructor Name:</span>
         <span class="review-value">${escapeHtml(report.instructorName)}</span>
-      </div>
-      <div class="review-field">
-        <span class="review-label">SEVIS ID:</span>
-        <span class="review-value">${escapeHtml(report.sevisId)}</span>
       </div>
       <div class="review-field">
         <span class="review-label">School Type:</span>
@@ -1244,15 +1256,15 @@ function renderReview() {
           <h4>Activity #${index + 1}</h4>
           <p class="review-prompt"><em>${escapeHtml(config.prompt)}</em></p>
           <div class="review-field">
-            <span class="review-label">Date:</span>
-            <span class="review-value">${formatDate(activity.date)}</span>
+            <span class="review-label">Date or Time Period:</span>
+            <span class="review-value">${escapeHtml(activity.date)}</span>
           </div>
           <div class="review-field">
             <span class="review-label">Location:</span>
             <span class="review-value">${escapeHtml(activity.location)}</span>
           </div>
           <div class="review-field">
-            <span class="review-label">Participants:</span>
+            <span class="review-label">Audience for and Participants in:</span>
             <span class="review-value">${escapeHtml(activity.participants)}</span>
           </div>
           ${activity.typeIndex === 1 ? `
