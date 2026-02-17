@@ -130,11 +130,26 @@ body {
   border-bottom: 2px solid var(--color-primary);
 }
 
-.app-header h1 {
-  margin: 0 0 var(--spacing-xs);
+.app-header .instructor-name-header {
+  margin: 0 0 var(--spacing-md);
   color: var(--color-primary);
   font-size: var(--font-size-xxl);
   font-weight: 700;
+  min-height: 40px;
+}
+
+.app-header h2 {
+  margin: 0 0 var(--spacing-xs);
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.app-header .school-year-display {
+  margin: var(--spacing-sm) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
 }
 
 .app-header .subtitle {
@@ -484,7 +499,8 @@ textarea.auto-expand {
 }
 
 .image-preview {
-  max-width: 100%;
+  max-width: 50%;
+  margin: 0 auto;
   border-radius: var(--radius-md);
   display: block;
 }
@@ -950,8 +966,16 @@ textarea.auto-expand {
     padding: var(--spacing-lg);
   }
 
-  .app-header h1 {
+  .app-header .instructor-name-header {
     font-size: var(--font-size-xl);
+  }
+
+  .app-header h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .image-preview {
+    max-width: 70%;
   }
 
   .progress-steps::before {
