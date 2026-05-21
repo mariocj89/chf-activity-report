@@ -27,9 +27,14 @@ The `?v=` query strings are what actually bust browser caches. They must match t
 - `main.js` — Wizard logic, state management, validation
 - `lib/pdf.js` — PDF generation with pdf-lib (WinAnsi encoding — no raw control characters in drawText)
 - `lib/image.js` — Client-side image processing (canvas crop to 16:9)
+- `lib/storage.js` — Generic localStorage draft auto-save module (reusable across CHF forms)
 - `config/org.js` — Organization branding, PDF styling constants
 - `config/version.js` — App version constant
 - `styles.css` — All styles
+
+## Auto-save
+
+Drafts are saved to `localStorage` every 30 seconds and on step transitions. On page load, a modal prompts the user to resume or discard. Drafts are cleared after successful PDF download. Photos are not stored (too large for localStorage) — a notice tells users to re-upload them after restoring a draft.
 
 ## PDF Generation Notes
 
