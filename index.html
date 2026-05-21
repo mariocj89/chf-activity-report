@@ -357,6 +357,18 @@
     </div>
   </template>
 
+  <!-- Draft restore modal -->
+  <div class="progress-overlay" id="draftBanner" style="display: none;">
+    <div class="progress-modal draft-modal">
+      <p class="draft-modal-title">Resume your draft?</p>
+      <p class="draft-modal-text">You have an unsaved draft from <span id="draftDate"></span>.</p>
+      <div class="draft-modal-actions">
+        <button type="button" class="btn-primary" id="draftResumeBtn">Resume</button>
+        <button type="button" class="btn-secondary" id="draftDiscardBtn">Start fresh</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="main.js?v=1.0.2"></script>
 </body>
 </html>

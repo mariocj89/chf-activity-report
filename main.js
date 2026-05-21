@@ -8,6 +8,7 @@
 import { processImageToLandscape16x9, formatFileSize, revokePreviewUrl } from './lib/image.js';
 import { generatePDF, generateFilename, downloadPDF } from './lib/pdf.js';
 import { APP_VERSION } from './config/version.js';
+import { saveDraft, loadDraft, clearDraft } from './lib/storage.js';
 
 // ========================================
 // Application State
@@ -46,6 +47,10 @@ const MAX_ACTIVITIES_INTERNATIONAL = 3;
 const MIN_PHOTOS = 1;
 const MAX_PHOTOS = 6;
 
+// Draft auto-save
+const DRAFT_KEY = 'chf-activity-report';
+const AUTOSAVE_INTERVAL_MS = 30000;
+
 // School types that require a third activity
 const INTERNATIONAL_SCHOOL_TYPES = ['International', 'Immersion'];
 
@@ -73,6 +78,186 @@ const ACTIVITY_CONFIG = [
 ];
 
 // ========================================
+// Draft Auto-save
+// ========================================
+
+function _buildDraftData() {
+  syncActivitiesFromForm();
+  return {
+    schoolYear: report.schoolYear,
+    instructorName: report.instructorName,
+    schoolType: report.schoolType,
+    headerPhoto: report.headerPhoto ? { had: true } : null,
+    distribution: report.distribution,
+    activities: report.activities.map(a => ({
+      typeIndex: a.typeIndex,
+      date: a.date,
+      location: a.location,
+      participants: a.participants,
+      description: a.description,
+      impact: a.impact,
+      medium: a.medium,
+      mediumOther: a.mediumOther,
+      foreignCountry: a.foreignCountry,
+      foreignSchoolName: a.foreignSchoolName,
+      foreignSchoolAddress: a.foreignSchoolAddress,
+      photos: a.photos.length > 0 ? { had: true, count: a.photos.length } : null
+    }))
+  };
+}
+
+function _saveCurrentDraft() {
+  saveDraft(DRAFT_KEY, _buildDraftData());
+}
+
+function _restoreDraft(draft) {
+  const d = draft.data;
+
+  // Restore general info
+  report.schoolYear = d.schoolYear || report.schoolYear;
+  report.instructorName = d.instructorName || '';
+  report.schoolType = d.schoolType || '';
+
+  document.getElementById('schoolYear').value = report.schoolYear;
+  document.getElementById('instructorName').value = report.instructorName;
+  document.getElementById('schoolType').value = report.schoolType;
+
+  // Restore distribution
+  if (d.distribution && d.distribution.categories) {
+    report.distribution.categories = d.distribution.categories;
+    for (const cat of report.distribution.categories) {
+      const input = document.querySelector(`.distribution-input[data-category="${cat.label}"]`);
+      if (input) {
+        input.value = cat.percent;
+      } else if (cat.percent > 0) {
+        addDistributionCategory(cat.label);
+        const newInput = document.querySelector(`.distribution-input[data-category="${cat.label}"]`);
+        if (newInput) newInput.value = cat.percent;
+      }
+    }
+    updateDistributionTotal();
+  }
+
+  // Restore activities — clear defaults and rebuild
+  const container = document.getElementById('activitiesContainer');
+  container.innerHTML = '';
+  report.activities = [];
+
+  let photosNeedReupload = false;
+  for (const actData of d.activities) {
+    const activity = {
+      typeIndex: actData.typeIndex,
+      date: actData.date || '',
+      location: actData.location || '',
+      participants: actData.participants || '',
+      description: actData.description || '',
+      impact: actData.impact || '',
+      medium: actData.medium || '',
+      mediumOther: actData.mediumOther || '',
+      foreignCountry: actData.foreignCountry || '',
+      foreignSchoolName: actData.foreignSchoolName || '',
+      foreignSchoolAddress: actData.foreignSchoolAddress || '',
+      photos: []
+    };
+    report.activities.push(activity);
+
+    const index = report.activities.length - 1;
+    renderActivity(index);
+
+    // Populate form fields
+    const card = container.querySelector(`.activity-card[data-activity-index="${index}"]`);
+    if (card) {
+      card.querySelector('.activity-date').value = activity.date;
+      card.querySelector('.activity-location').value = activity.location;
+      card.querySelector('.activity-participants').value = activity.participants;
+      card.querySelector('.activity-description').value = activity.description;
+      card.querySelector('.activity-impact').value = activity.impact;
+
+      if (activity.typeIndex === 1) {
+        const mediumSelect = card.querySelector('.activity-medium');
+        if (mediumSelect) mediumSelect.value = activity.medium;
+        const mediumOther = card.querySelector('.activity-medium-other');
+        if (mediumOther) mediumOther.value = activity.mediumOther;
+        const otherContainer = card.querySelector('.medium-other-container');
+        if (otherContainer) otherContainer.style.display = activity.medium === 'Other' ? 'block' : 'none';
+        const foreignCountry = card.querySelector('.activity-foreign-country');
+        if (foreignCountry) foreignCountry.value = activity.foreignCountry;
+        const foreignSchoolName = card.querySelector('.activity-foreign-school-name');
+        if (foreignSchoolName) foreignSchoolName.value = activity.foreignSchoolName;
+        const foreignSchoolAddress = card.querySelector('.activity-foreign-school-address');
+        if (foreignSchoolAddress) foreignSchoolAddress.value = activity.foreignSchoolAddress;
+      }
+    }
+
+    if (actData.photos && actData.photos.had) {
+      photosNeedReupload = true;
+    }
+  }
+
+  // Show photo re-upload notice if needed
+  if (photosNeedReupload || (d.headerPhoto && d.headerPhoto.had)) {
+    _showPhotoNotice();
+  }
+
+  updateActivityCount();
+  updateActivityButtons();
+  updateHeaderDisplay();
+
+  // Always start from step 1 on restore
+  currentStep = 1;
+  updateWizardUI();
+}
+
+function _showPhotoNotice() {
+  const notice = document.createElement('div');
+  notice.className = 'draft-photo-notice';
+  notice.id = 'draftPhotoNotice';
+  notice.textContent = 'Photos cannot be restored from drafts. Please re-upload your header photo and activity photos.';
+
+  const header = document.querySelector('.app-header');
+  header.parentNode.insertBefore(notice, header.nextSibling);
+}
+
+function _formatRelativeDate(isoString) {
+  const saved = new Date(isoString);
+  const now = new Date();
+  const diffMs = now - saved;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+}
+
+function initDraftRestore() {
+  const draft = loadDraft(DRAFT_KEY);
+  if (!draft) return;
+
+  const banner = document.getElementById('draftBanner');
+  const dateEl = document.getElementById('draftDate');
+  const resumeBtn = document.getElementById('draftResumeBtn');
+  const discardBtn = document.getElementById('draftDiscardBtn');
+
+  dateEl.textContent = _formatRelativeDate(draft.savedAt);
+  banner.style.display = 'flex';
+
+  resumeBtn.addEventListener('click', () => {
+    banner.style.display = 'none';
+    _restoreDraft(draft);
+  });
+
+  discardBtn.addEventListener('click', () => {
+    banner.style.display = 'none';
+    clearDraft(DRAFT_KEY);
+  });
+}
+
+// ========================================
 // Initialization
 // ========================================
 
@@ -93,6 +278,12 @@ document.addEventListener('DOMContentLoaded', () => {
   updateActivityCount();
 
   document.getElementById('appVersion').textContent = `v${APP_VERSION}`;
+
+  // Draft restore (must come after defaults are set up)
+  initDraftRestore();
+
+  // Start periodic auto-save
+  setInterval(_saveCurrentDraft, AUTOSAVE_INTERVAL_MS);
 });
 
 // ========================================
@@ -903,6 +1094,7 @@ function initNavigationButtons() {
 
 function goToPreviousStep() {
   if (currentStep > 1) {
+    _saveCurrentDraft();
     currentStep--;
     updateWizardUI();
   }
@@ -913,6 +1105,8 @@ function goToNextStep() {
   if (!validateCurrentStep()) {
     return;
   }
+
+  _saveCurrentDraft();
 
   if (currentStep < TOTAL_STEPS) {
     currentStep++;
@@ -1341,6 +1535,9 @@ async function generateReport() {
     // Trigger download
     statusEl.textContent = 'Downloading...';
     downloadPDF(pdfBytes, filename);
+
+    // Clear draft after successful generation
+    clearDraft(DRAFT_KEY);
 
     // Success message
     statusEl.textContent = 'Complete!';
